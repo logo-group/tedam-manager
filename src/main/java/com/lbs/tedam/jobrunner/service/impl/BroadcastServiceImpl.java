@@ -34,6 +34,7 @@ import com.lbs.tedam.model.Job;
 import com.lbs.tedam.model.JobCommand;
 import com.lbs.tedam.model.JobDetail;
 import com.lbs.tedam.model.JobRunnerDetailCommand;
+import com.lbs.tedam.notification.NotifierFactory;
 import com.lbs.tedam.util.EnumsV2.ClientStatus;
 import com.lbs.tedam.util.EnumsV2.CommandStatus;
 import com.lbs.tedam.util.EnumsV2.JobStatus;
@@ -94,6 +95,9 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 			startJobDetailCompletedOperations(jobDetail);
 			if (isJobCompleted(job, jobDetail)) {
 				startJobCompletedOperations(jobDetail, job);
+				if (job.getNotificationGroup() != null) {
+					sendNotification(job);
+				}
 			}
 		}
 		if (isJobStopped(job)) {
@@ -183,5 +187,9 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 			}
 		}
 		return true;
+	}
+
+	private void sendNotification(Job job) {
+		NotifierFactory.getNotifier(job.getNotificationGroup().getType()).sendNotification(job);
 	}
 }
