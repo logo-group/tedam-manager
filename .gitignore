@@ -1,6 +1,7 @@
 target/
 bin/
 src/main/resources/config.properties
+src/main/resources/mail.properties
 
 # IntelliJ project files
 *.iml
