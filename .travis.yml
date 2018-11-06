@@ -9,7 +9,7 @@ addons:
 before_install:
   - npm install -g newman
   - git clone https://github.com/logobs/tedam-rest.git
-  - cd tedam-rest && mvn install -DskipTests && cd ..
+  - cd tedam-rest && mvn clean install -DskipTests && cd ..
   - git clone https://github.com/logobs/tedam-core.git
   - cd tedam-core && mvn install -DskipTests && cd ..
 script:
