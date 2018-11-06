@@ -11,6 +11,6 @@ before_install:
   - git clone https://github.com/logobs/tedam-rest.git
   - cd tedam-rest && mvn clean install -DskipTests && cd ..
   - git clone https://github.com/logobs/tedam-core.git
-  - cd tedam-core && mvn install -DskipTests && cd ..
+  - cd tedam-core && mvn clean install -DskipTests && cd ..
 script:
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
