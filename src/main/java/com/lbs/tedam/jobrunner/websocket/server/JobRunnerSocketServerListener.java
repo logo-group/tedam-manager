@@ -70,7 +70,7 @@ public class JobRunnerSocketServerListener implements WebSocketServerListener, H
 		if (TedamSocketMessageType.CLIENT.equals(tedamSocketMessage.getTedamSocketMessageType())) {
 			ClientMessage clientMessage = TedamJsonFactory.fromJson(tedamSocketMessage.getDetail(), ClientMessage.class);
 			try {
-				addSession(session, clientMessage.getClientName());
+				addSession(session, clientMessage);
 				clientMapService.updateClientMap(sessionMap.get(session), clientMessage.getClientStatus());
 			} catch (LocalizedException e) {
 				getLogger().error(e.getLocalizedMessage(), e);
@@ -97,8 +97,8 @@ public class JobRunnerSocketServerListener implements WebSocketServerListener, H
 		sessionMap.remove(session);
 	}
 
-	private void addSession(Session session, String clientName) throws LocalizedException {
-		Client client = clientService.getClientByName(clientName);
+	private void addSession(Session session, ClientMessage clientMessage) throws LocalizedException {
+		Client client = clientService.getClientByNameAndProjectName(clientMessage.getClientName(), clientMessage.getProjectName());
 		sessionMap.put(session, client);
 	}
 
@@ -111,7 +111,8 @@ public class JobRunnerSocketServerListener implements WebSocketServerListener, H
 		String message = TedamJsonFactory.toJson(jobRunnerCommand);
 		getLogger().info("Server outgoing message : " + message);
 		for (Entry<Session, Client> entry : sessionMap.entrySet()) {
-			if (client.equals(entry.getValue())) {
+			if (client.equals(entry.getValue())
+					&& client.getProject().getName().equals(entry.getValue().getProject().getName())) {
 				try {
 					entry.getKey().setMaxTextMessageBufferSize(123321);
 					entry.getKey().getBasicRemote().sendText(message);
