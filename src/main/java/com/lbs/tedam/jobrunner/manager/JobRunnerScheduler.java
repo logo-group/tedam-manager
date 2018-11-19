@@ -29,8 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.lbs.tedam.exception.localized.LocalizedException;
+import com.lbs.tedam.jobrunner.engine.JobRunnerEngine;
 import com.lbs.tedam.model.Job;
 import com.lbs.tedam.util.HasLogger;
+import com.lbs.tedam.util.TedamProcessUtils;
 
 @Component
 public class JobRunnerScheduler implements Serializable, HasLogger, Runnable {
@@ -62,6 +64,13 @@ public class JobRunnerScheduler implements Serializable, HasLogger, Runnable {
 		}
 	}
 
+	public void stopJob(Job job) throws LocalizedException {
+		if (jobPool.contains(job)) {
+			jobPool.remove(job);
+		}
+		jobRunnerManager.stopJob(job);
+	}
+
 	@Override
 	public void run() {
 		while (true) {
@@ -79,6 +88,7 @@ public class JobRunnerScheduler implements Serializable, HasLogger, Runnable {
 					}
 				}
 			}
+			TedamProcessUtils.sleepThread(JobRunnerEngine.sleepWaitMillis);
 		}
 	}
 

@@ -29,7 +29,6 @@ import com.lbs.tedam.data.service.JobService;
 import com.lbs.tedam.exception.localized.LocalizedException;
 import com.lbs.tedam.jobrunner.TedamManagerApplication;
 import com.lbs.tedam.jobrunner.manager.ClientMapService;
-import com.lbs.tedam.jobrunner.manager.JobRunnerManager;
 import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
 import com.lbs.tedam.model.Job;
 import com.lbs.tedam.util.EnumsV2.ClientStatus;
@@ -40,15 +39,13 @@ import com.lbs.tedam.util.TedamJsonFactory;
 @RequestMapping(TedamManagerApplication.REST_URL + "/JobRunnerRestService")
 public class JobRunnerRestService implements HasLogger {
 
-	private final JobRunnerManager jobRunnerManager;
 	private final JobRunnerScheduler jobRunnerScheduler;
 	private final ClientMapService clientMapService;
 	private final JobService jobService;
 
 	@Autowired
-	public JobRunnerRestService(JobRunnerManager jobRunnerManager, ClientMapService clientMapService,
-			JobService jobService, JobRunnerScheduler jobRunnerScheduler) {
-		this.jobRunnerManager = jobRunnerManager;
+	public JobRunnerRestService(ClientMapService clientMapService, JobService jobService,
+			JobRunnerScheduler jobRunnerScheduler) {
 		this.jobRunnerScheduler = jobRunnerScheduler;
 		this.clientMapService = clientMapService;
 		this.jobService = jobService;
@@ -75,7 +72,7 @@ public class JobRunnerRestService implements HasLogger {
 		Job job;
 		try {
 			job = jobService.getById(jobId);
-			jobRunnerManager.stopJob(job);
+			jobRunnerScheduler.stopJob(job);
 			getLogger().info("Job stop triggered. Name: " + job.getName());
 			return HttpStatus.OK.getReasonPhrase();
 		} catch (LocalizedException e) {

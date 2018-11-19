@@ -49,7 +49,7 @@ public class JobRunnerEngine implements Runnable, HasLogger {
 
 	private String projectName;
 
-	private int sleepWaitMillis = 50;
+	public static final int sleepWaitMillis = 50;
 
 	/** List<Job> queuedJobs is list of jobs held in the queue */
 	private List<Job> queuedJobs = new ArrayList<>();
