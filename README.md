@@ -20,7 +20,6 @@ In general, it is the module that provides the coordination of the system. Basic
 •	Notify user or 3rd party software with test results.<br>
 
 Tedam Manager contains the following parts:<br>
-
 -WebSocket<br>
 -Rest API<br>
 -Notifier<br>
