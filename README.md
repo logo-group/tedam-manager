@@ -13,7 +13,6 @@
 
 Tedam Manager is an essential part of the TEDAM ecosystem. Tedam Manager can work itself like TedamFace and Tedam Agent.<br>
 In general, it is the module that provides the coordination of the system. Basic responsibilities of Tedam Manager are;<br>
-
 •	Transform test scenarios that entered via Tedam Face to executable commands,<br>
 •	Send executable commands to available Tedam Agents,<br>
 •	Collect test run results from Tedam Agent,<br>
