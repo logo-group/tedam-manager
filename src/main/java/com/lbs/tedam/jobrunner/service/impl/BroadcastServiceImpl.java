@@ -117,6 +117,7 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	private void startJobCompletedOperations(JobDetail jobDetail, Job job) throws LocalizedException {
 		getLogger().info("The job with id: " + jobDetail.getJobId() + " finished");
 		jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.COMPLETED, job.getLastExecutedStartDate(), LocalDateTime.now());
+		jobService.resetJobPlannedDate(job.getId());
 		// String jobReportFilePath = propertyService.getPropertyByNameAndParameter(Constants.PROPERTY_CONFIG, Constants.PROPERTY_TEMP_FILE_PATH).getValue();
 		// jobReportService.createJobReportFile(jobDetail.getJobId(), jobReportFilePath);
 		// jobReportService.removeJobReportMap(jobDetail.getJobId());
