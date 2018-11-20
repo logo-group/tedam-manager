@@ -77,7 +77,7 @@ public class JobRunnerScheduler implements Serializable, HasLogger, Runnable {
 			Iterator<Job> iterator = jobPool.iterator();
 			while (iterator.hasNext()) {
 				Job job = iterator.next();
-				if (LocalDateTime.now().compareTo(job.getPlannedDate()) <= 0) {
+				if (LocalDateTime.now().isAfter(job.getPlannedDate())) {
 					try {
 						jobRunnerManager.addJob(job);
 						iterator.remove();
