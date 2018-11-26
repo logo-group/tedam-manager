@@ -11,7 +11,7 @@
 [sonar-dublicated-lines]: https://sonarcloud.io/api/project_badges/measure?project=com.lbs.tedam%3ATedamManager&metric=duplicated_lines_density
 
 
-Tedam Manager is an essential part of the TEDAM ecosystem. Tedam Manager can work itself like TedamFace and Tedam Agent.<br>
+Tedam Manager is an essential part of the TEDAM ecosystem. Tedam Manager can work itself like Tedam Face and Tedam Agent.<br>
 In general, it is the module that provides the coordination of the system. Basic responsibilities of Tedam Manager are;<br>
 •	Transform test scenarios that entered via Tedam Face to executable commands,<br>
 •	Send executable commands to available Tedam Agents,<br>
