@@ -19,6 +19,8 @@ package com.lbs.tedam.jobrunner.service.impl;
 
 import java.time.LocalDateTime;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.lbs.tedam.data.service.JobCommandService;
 import com.lbs.tedam.data.service.JobDetailService;
 import com.lbs.tedam.data.service.JobRunnerDetailCommandService;
@@ -28,6 +30,7 @@ import com.lbs.tedam.exception.VersionParameterValueException;
 import com.lbs.tedam.exception.localized.LocalizedException;
 import com.lbs.tedam.jobrunner.manager.ClientMapService;
 import com.lbs.tedam.jobrunner.manager.JobRunnerManager;
+import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
 import com.lbs.tedam.jobrunner.service.BroadcastService;
 import com.lbs.tedam.model.Client;
 import com.lbs.tedam.model.Job;
@@ -52,8 +55,12 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	private final JobRunnerManager jobRunnerManager;
 	private final PropertyService propertyService;
 
-	public BroadcastServiceImpl(JobRunnerManager jobRunnerManager, ClientMapService clientMapService, JobService jobService, JobCommandService jobCommandService,
-			JobDetailService jobDetailService, JobRunnerDetailCommandService jobRunnerDetailCommandService, PropertyService propertyService) {
+	@Autowired
+	private JobRunnerScheduler jobRunnerScheduler;
+
+	public BroadcastServiceImpl(JobRunnerManager jobRunnerManager, ClientMapService clientMapService,
+			JobService jobService, JobCommandService jobCommandService, JobDetailService jobDetailService,
+			JobRunnerDetailCommandService jobRunnerDetailCommandService, PropertyService propertyService) {
 		this.jobRunnerManager = jobRunnerManager;
 		this.jobService = jobService;
 		this.jobCommandService = jobCommandService;
@@ -65,18 +72,20 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 
 	/**
 	 * this method startJobCommandOperations <br>
+	 * 
 	 * @author Canberk.Erkmen
 	 * @param jobCommandId
 	 * @param commandStatusCode
 	 * @param result
-	 * @param description
-	 *            <br>
+	 * @param description       <br>
 	 * @throws VersionParameterValueException
 	 * @throws LocalizedException
 	 */
 	@Override
-	public void startJobCommandOperations(JobRunnerDetailCommand jobRunnerDetailCommand) throws VersionParameterValueException, LocalizedException {
-		JobCommand jobCommand = jobRunnerDetailCommandService.getJobCommandByJobRunnerDetailCommand(jobRunnerDetailCommand);
+	public void startJobCommandOperations(JobRunnerDetailCommand jobRunnerDetailCommand)
+			throws VersionParameterValueException, LocalizedException {
+		JobCommand jobCommand = jobRunnerDetailCommandService
+				.getJobCommandByJobRunnerDetailCommand(jobRunnerDetailCommand);
 		jobCommandService.updateJobCommand(jobCommand);
 		JobDetail jobDetail = jobDetailService.getById(jobCommand.getJobDetailId());
 		Job job = jobService.getById(jobDetail.getJobId());
@@ -89,7 +98,8 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 		if (CommandStatus.NOT_STARTED == jobDetail.getStatus()) {
 			startJobDetailInProgressOperations(jobDetail);
 			if (JobStatus.STARTED != job.getStatus()) {
-				jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.STARTED, LocalDateTime.now(), null);
+				jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.STARTED,
+						LocalDateTime.now(), null);
 			}
 		} else if (isJobDetailJobCommandListFinished(jobDetail)) {
 			startJobDetailCompletedOperations(jobDetail);
@@ -109,17 +119,26 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 
 	}
 
-	private void startTestRunOperations(JobRunnerDetailCommand jobRunnerDetailCommand, JobCommand jobCommand, JobDetail jobDetail, Job job)
-			throws VersionParameterValueException, LocalizedException {
-		jobRunnerDetailCommandService.createTestRunForTestCaseAndTestStep(jobRunnerDetailCommand, jobCommand, jobDetail, job);
+	private void startTestRunOperations(JobRunnerDetailCommand jobRunnerDetailCommand, JobCommand jobCommand,
+			JobDetail jobDetail, Job job) throws VersionParameterValueException, LocalizedException {
+		jobRunnerDetailCommandService.createTestRunForTestCaseAndTestStep(jobRunnerDetailCommand, jobCommand, jobDetail,
+				job);
 	}
 
 	private void startJobCompletedOperations(JobDetail jobDetail, Job job) throws LocalizedException {
 		getLogger().info("The job with id: " + jobDetail.getJobId() + " finished");
-		jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.COMPLETED, job.getLastExecutedStartDate(), LocalDateTime.now());
-		jobService.resetJobPlannedDate(job.getId());
-		// String jobReportFilePath = propertyService.getPropertyByNameAndParameter(Constants.PROPERTY_CONFIG, Constants.PROPERTY_TEMP_FILE_PATH).getValue();
-		// jobReportService.createJobReportFile(jobDetail.getJobId(), jobReportFilePath);
+		jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.COMPLETED,
+				job.getLastExecutedStartDate(), LocalDateTime.now());
+		if (job.getPlannedDate() != null && job.isRunEveryDay()) {
+			addOneDayMore(job);
+		} else {
+			jobService.resetJobPlannedDate(job.getId());
+		}
+		// String jobReportFilePath =
+		// propertyService.getPropertyByNameAndParameter(Constants.PROPERTY_CONFIG,
+		// Constants.PROPERTY_TEMP_FILE_PATH).getValue();
+		// jobReportService.createJobReportFile(jobDetail.getJobId(),
+		// jobReportFilePath);
 		// jobReportService.removeJobReportMap(jobDetail.getJobId());
 		jobRunnerManager.removeJobFromRunningJobs(job);
 	}
@@ -131,13 +150,15 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	}
 
 	private void startJobDetailCompletedOperations(JobDetail jobDetail) throws LocalizedException {
-		getLogger().info("The jobdetail with testSetId: " + jobDetail.getTestSet().getId() + " and with jobDetailId:  " + jobDetail.getId() + " finished");
+		getLogger().info("The jobdetail with testSetId: " + jobDetail.getTestSet().getId() + " and with jobDetailId:  "
+				+ jobDetail.getId() + " finished");
 		Client client = jobDetail.getClient();
 		jobDetail.setStatus(CommandStatus.COMPLETED);
 		jobDetail.getTestSet().setTestSetStatus(CommandStatus.COMPLETED);
 		jobDetail.getTestSet().setExecutionDateTime(LocalDateTime.now());
 		jobDetail.getJobCommands().clear();
-		getLogger().info("clientName : " + client.getName() + " clientId : " + client.getId() + " will be set to free.");
+		getLogger()
+				.info("clientName : " + client.getName() + " clientId : " + client.getId() + " will be set to free.");
 		clientMapService.updateClientMap(client, ClientStatus.FREE);
 		jobDetail.setClient(null);
 		jobDetailService.save(jobDetail);
@@ -145,8 +166,10 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	}
 
 	// private void buildJobReport(JobCommand jobCommand, JobDetail jobDetail) {
-	// JobReport jobReport = jobReportService.getJobReportByParams(jobCommand.getTestCase(), jobDetail);
-	// JobReportResult jobReportResult = jobReportService.getJobReportResultByParams(jobCommand);
+	// JobReport jobReport =
+	// jobReportService.getJobReportByParams(jobCommand.getTestCase(), jobDetail);
+	// JobReportResult jobReportResult =
+	// jobReportService.getJobReportResultByParams(jobCommand);
 	// jobReportService.addJobReportMap(jobReport, jobReportResult);
 	// }
 
@@ -156,7 +179,8 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 			if (jobDetail.equals(lastJobDetail) && CommandStatus.COMPLETED.equals(lastJobDetail.getStatus())) {
 				continue;
 			}
-			// If any job detail status is not completed, false is returned because jobDetailList is not complete.
+			// If any job detail status is not completed, false is returned because
+			// jobDetailList is not complete.
 			if (!CommandStatus.COMPLETED.equals(jobDetail.getStatus())) {
 				return false;
 			}
@@ -166,7 +190,8 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 
 	public boolean isJobInProgress(Job job) {
 		for (JobDetail jobDetail : job.getJobDetails()) {
-			// If any job detail status is not completed, false is returned if jobDetailList is not complete.
+			// If any job detail status is not completed, false is returned if jobDetailList
+			// is not complete.
 			if (CommandStatus.IN_PROGRESS.equals(jobDetail.getStatus())) {
 				return true;
 			}
@@ -183,11 +208,19 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 
 	public boolean isJobDetailJobCommandListFinished(JobDetail jobDetail) {
 		for (JobCommand jobCommand : jobDetail.getJobCommands()) {
-			if (!CommandStatus.COMPLETED.equals(jobCommand.getCommandStatus()) && !CommandStatus.BLOCKED.equals(jobCommand.getCommandStatus())) {
+			if (!CommandStatus.COMPLETED.equals(jobCommand.getCommandStatus())
+					&& !CommandStatus.BLOCKED.equals(jobCommand.getCommandStatus())) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	private void addOneDayMore(Job job) throws LocalizedException {
+		job.setStatus(JobStatus.PLANNED);
+		job.setPlannedDate(job.getPlannedDate().plusDays(1));
+		jobRunnerScheduler.scheduleJob(job);
+		jobService.save(job);
 	}
 
 	private void sendNotification(Job job) {
