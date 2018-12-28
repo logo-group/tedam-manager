@@ -29,9 +29,10 @@ import com.lbs.tedam.data.service.JobParameterService;
 import com.lbs.tedam.data.service.JobRunnerDetailCommandService;
 import com.lbs.tedam.data.service.JobService;
 import com.lbs.tedam.data.service.ProjectService;
-import com.lbs.tedam.data.service.PropertyService;
 import com.lbs.tedam.data.service.TestCaseService;
 import com.lbs.tedam.data.service.TestSetService;
+import com.lbs.tedam.jobrunner.event.job.JobListener;
+import com.lbs.tedam.jobrunner.event.job.JobListenerImpl;
 import com.lbs.tedam.jobrunner.manager.ClientMapService;
 import com.lbs.tedam.jobrunner.manager.JobRunnerManager;
 import com.lbs.tedam.jobrunner.service.BroadcastService;
@@ -47,25 +48,34 @@ import com.lbs.tedam.jobrunner.websocket.server.JobRunnerSocketServerListener;
 public class ServerEndpointConfig {
 
 	@Bean
-	public BroadcastService broadcastService(ClientMapService clientMapService, JobService jobService, JobCommandService jobCommandService, JobDetailService jobDetailService,
-			JobRunnerManager jobRunnerManager, JobRunnerDetailCommandService jobRunnerDetailCommandService, PropertyService propertyService,
-			JobParameterService jobParameterService, TestCaseService testCaseService) {
-		return new BroadcastServiceImpl(jobRunnerManager, clientMapService, jobService, jobCommandService, jobDetailService, jobRunnerDetailCommandService, propertyService);
+	public BroadcastService broadcastService(ClientMapService clientMapService, JobService jobService,
+			JobCommandService jobCommandService, JobDetailService jobDetailService, JobRunnerManager jobRunnerManager,
+			JobRunnerDetailCommandService jobRunnerDetailCommandService, JobParameterService jobParameterService,
+			TestCaseService testCaseService) {
+		BroadcastServiceImpl broadcastServiceImpl = new BroadcastServiceImpl(jobRunnerManager, clientMapService,
+				jobService, jobCommandService, jobDetailService, jobRunnerDetailCommandService);
+		JobListener jobListener = new JobListenerImpl();
+		broadcastServiceImpl.addJobListener(jobListener);
+		return broadcastServiceImpl;
 	}
 
 	@Bean
-	public CIRestServiceController ciRestServiceController(JobService jobService, ProjectService projectService, JobRunnerManager jobRunnerManager) {
+	public CIRestServiceController ciRestServiceController(JobService jobService, ProjectService projectService,
+			JobRunnerManager jobRunnerManager) {
 		return new CIRestServiceControllerImpl(jobService, projectService, jobRunnerManager);
 	}
 
 	@Bean
-	public JobRunnerEngineService jobRunnerEngineService(JobService jobService, JobDetailService jobDetailService, TestSetService testSetService, TestCaseService testCaseService,
-			DraftCommandService draftCommandService, JobParameterService jobParameterService) {
-		return new JobRunnerEngineServiceImpl(jobService, jobDetailService, testSetService, testCaseService, draftCommandService, jobParameterService);
+	public JobRunnerEngineService jobRunnerEngineService(JobService jobService, JobDetailService jobDetailService,
+			TestSetService testSetService, TestCaseService testCaseService, DraftCommandService draftCommandService,
+			JobParameterService jobParameterService) {
+		return new JobRunnerEngineServiceImpl(jobService, jobDetailService, testSetService, testCaseService,
+				draftCommandService, jobParameterService);
 	}
 
 	@Bean
-	public JobRunnerSocketServerListener jobRunnerSocketServerListener(BroadcastService broadcastService, ClientMapService clientMapService, ClientService clientService) {
+	public JobRunnerSocketServerListener jobRunnerSocketServerListener(BroadcastService broadcastService,
+			ClientMapService clientMapService, ClientService clientService) {
 		return new JobRunnerSocketServerListener(broadcastService, clientMapService, clientService);
 	}
 

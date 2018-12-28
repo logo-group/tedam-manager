@@ -31,7 +31,6 @@ import com.lbs.tedam.data.service.JobCommandService;
 import com.lbs.tedam.data.service.JobDetailService;
 import com.lbs.tedam.data.service.JobRunnerDetailCommandService;
 import com.lbs.tedam.data.service.JobService;
-import com.lbs.tedam.data.service.PropertyService;
 import com.lbs.tedam.exception.VersionParameterValueException;
 import com.lbs.tedam.exception.localized.LocalizedException;
 import com.lbs.tedam.jobrunner.manager.ClientMapService;
@@ -55,7 +54,6 @@ public class BroadcastServiceTest {
 	private ClientMapService clientMapService;
 	private JobRunnerDetailCommandService jobRunnerDetailCommandService;
 	private JobRunnerManager jobRunnerManager;
-	private PropertyService propertyService;
 	private BroadcastServiceImpl broadCastService;
 
 	@Before
@@ -66,9 +64,8 @@ public class BroadcastServiceTest {
 		clientMapService = mock(ClientMapService.class);
 		jobRunnerDetailCommandService = mock(JobRunnerDetailCommandService.class);
 		jobRunnerManager = mock(JobRunnerManager.class);
-		propertyService = mock(PropertyService.class);
 		broadCastService = new BroadcastServiceImpl(jobRunnerManager, clientMapService, jobService, jobCommandService,
-				jobDetailService, jobRunnerDetailCommandService, propertyService);
+				jobDetailService, jobRunnerDetailCommandService);
 	}
 
 	@Test
@@ -197,8 +194,7 @@ public class BroadcastServiceTest {
 	}
 
 	@Test
-	public void startJobCommandOperationsTestWithCompleted()
-			throws LocalizedException, VersionParameterValueException {
+	public void startJobCommandOperationsTestWithCompleted() throws LocalizedException, VersionParameterValueException {
 		Client client = new Client();
 		JobRunnerDetailCommand jobRunnerDetailCommand = new JobRunnerDetailCommand();
 		JobCommand jobCommand = new JobCommand();

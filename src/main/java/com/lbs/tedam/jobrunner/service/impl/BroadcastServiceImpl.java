@@ -18,6 +18,8 @@
 package com.lbs.tedam.jobrunner.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,9 +27,10 @@ import com.lbs.tedam.data.service.JobCommandService;
 import com.lbs.tedam.data.service.JobDetailService;
 import com.lbs.tedam.data.service.JobRunnerDetailCommandService;
 import com.lbs.tedam.data.service.JobService;
-import com.lbs.tedam.data.service.PropertyService;
 import com.lbs.tedam.exception.VersionParameterValueException;
 import com.lbs.tedam.exception.localized.LocalizedException;
+import com.lbs.tedam.jobrunner.event.job.JobEvent;
+import com.lbs.tedam.jobrunner.event.job.JobListener;
 import com.lbs.tedam.jobrunner.manager.ClientMapService;
 import com.lbs.tedam.jobrunner.manager.JobRunnerManager;
 import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
@@ -37,7 +40,6 @@ import com.lbs.tedam.model.Job;
 import com.lbs.tedam.model.JobCommand;
 import com.lbs.tedam.model.JobDetail;
 import com.lbs.tedam.model.JobRunnerDetailCommand;
-import com.lbs.tedam.notification.NotifierFactory;
 import com.lbs.tedam.util.EnumsV2.ClientStatus;
 import com.lbs.tedam.util.EnumsV2.CommandStatus;
 import com.lbs.tedam.util.EnumsV2.JobStatus;
@@ -53,21 +55,24 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	private final ClientMapService clientMapService;
 	private final JobRunnerDetailCommandService jobRunnerDetailCommandService;
 	private final JobRunnerManager jobRunnerManager;
-	private final PropertyService propertyService;
+	private final List<JobListener> jobListenerList = new ArrayList<JobListener>();
 
 	@Autowired
 	private JobRunnerScheduler jobRunnerScheduler;
 
 	public BroadcastServiceImpl(JobRunnerManager jobRunnerManager, ClientMapService clientMapService,
 			JobService jobService, JobCommandService jobCommandService, JobDetailService jobDetailService,
-			JobRunnerDetailCommandService jobRunnerDetailCommandService, PropertyService propertyService) {
+			JobRunnerDetailCommandService jobRunnerDetailCommandService) {
 		this.jobRunnerManager = jobRunnerManager;
 		this.jobService = jobService;
 		this.jobCommandService = jobCommandService;
 		this.jobDetailService = jobDetailService;
 		this.clientMapService = clientMapService;
 		this.jobRunnerDetailCommandService = jobRunnerDetailCommandService;
-		this.propertyService = propertyService;
+	}
+
+	public void addJobListener(JobListener jobListener) {
+		jobListenerList.add(jobListener);
 	}
 
 	/**
@@ -105,9 +110,7 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 			startJobDetailCompletedOperations(jobDetail);
 			if (isJobCompleted(job, jobDetail)) {
 				startJobCompletedOperations(jobDetail, job);
-				if (job.getNotificationGroup() != null) {
-					sendNotification(job);
-				}
+				callOnJobComplete(job);
 			}
 		}
 		if (isJobStopped(job)) {
@@ -223,7 +226,10 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 		jobService.save(job);
 	}
 
-	private void sendNotification(Job job) {
-		NotifierFactory.getNotifier(job.getNotificationGroup().getType()).sendNotification(job);
+	private void callOnJobComplete(Job job) {
+		for (JobListener listener : jobListenerList) {
+			JobEvent event = new JobEvent(job);
+			listener.onJobComplete(event);
+		}
 	}
 }
