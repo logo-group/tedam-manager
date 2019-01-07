@@ -76,6 +76,7 @@ public class JobRunnerManager implements Serializable, HasLogger {
 
 	public void addJob(Job tempJob) throws LocalizedException {
 		Job job = jobService.getById(tempJob.getId());
+		job.setJobGroupId(tempJob.getJobGroupId());
 		JobRunnerEngine jobRunnerEngine = projectEngineMap.get(job.getProject());
 		// job.setProject(getProjectFromMap(job.getProject()));
 		jobRunnerEngine.addNewJobToQueue(job);

@@ -17,22 +17,65 @@
 
 package com.lbs.tedam.jobrunner.event.job;
 
+import java.util.List;
+
+import com.lbs.tedam.data.service.JobGroupService;
+import com.lbs.tedam.exception.localized.LocalizedException;
+import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
 import com.lbs.tedam.model.Job;
+import com.lbs.tedam.model.JobGroup;
 import com.lbs.tedam.notification.NotifierFactory;
 import com.lbs.tedam.util.EnumsV2.NotificationType;
 
 public class JobListenerImpl implements JobListener {
 
+	private JobGroupService jobGroupService;
+	private JobRunnerScheduler jobRunnerScheduler;
+
+	public JobListenerImpl(JobGroupService jobGroupService, JobRunnerScheduler jobRunnerScheduler) {
+		this.jobGroupService = jobGroupService;
+		this.jobRunnerScheduler = jobRunnerScheduler;
+	}
+
 	@Override
-	public void onJobComplete(JobEvent event) {
+	public void onJobComplete(JobEvent event) throws LocalizedException {
 		Job job = event.getJob();
 		sendNotification(job);
+		startNextGroupJob(job);
 	}
 
 	private void sendNotification(Job job) {
 		NotificationType notificationType = job.getNotificationGroup().getType();
 		if (notificationType != null) {
 			NotifierFactory.getNotifier(notificationType).sendNotification(job);
+		}
+	}
+
+	private void startNextGroupJob(Job job) throws LocalizedException {
+		Integer jobGroupId = job.getJobGroupId();
+		if (jobGroupId != null && jobGroupId.equals(Integer.valueOf(0)) == false) {
+			JobGroup jobGroup = jobGroupService.getById(jobGroupId);
+			List<Job> jobs = jobGroup.getJobs();
+			if (jobs != null && jobs.size() > 0) {
+				checkForNextGroupJob(job, jobGroupId, jobs);
+			}
+		}
+	}
+
+	private void checkForNextGroupJob(Job job, Integer jobGroupId, List<Job> jobs) throws LocalizedException {
+		boolean jobFound = false;
+		for (Job jobVar : jobs) {
+			if (jobFound) { // we found executed job one step before. So this job must be executed because
+							// of group execution.
+				jobVar.setJobGroupId(jobGroupId);
+				jobRunnerScheduler.scheduleJob(jobVar);
+				break;
+			}
+			else if (job.equals(jobVar)) {
+				jobFound = true; // we found executed job in this step. so in next step we will execute next
+									// job.
+				break;
+			}
 		}
 	}
 

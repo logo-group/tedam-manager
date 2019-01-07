@@ -94,6 +94,7 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 		jobCommandService.updateJobCommand(jobCommand);
 		JobDetail jobDetail = jobDetailService.getById(jobCommand.getJobDetailId());
 		Job job = jobService.getById(jobDetail.getJobId());
+		job.setJobGroupId(jobRunnerDetailCommand.getJobGroupId());
 		// TODO: will be checked later
 		// buildJobReport(jobCommand, jobDetail);
 		if (RunOrder.RUN_SCRIPT.equals(jobCommand.getDraftCommand().getRunOrder())
@@ -226,7 +227,7 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 		jobService.save(job);
 	}
 
-	private void callOnJobComplete(Job job) {
+	private void callOnJobComplete(Job job) throws LocalizedException {
 		for (JobListener listener : jobListenerList) {
 			JobEvent event = new JobEvent(job);
 			listener.onJobComplete(event);

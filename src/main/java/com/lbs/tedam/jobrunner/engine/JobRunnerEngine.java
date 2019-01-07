@@ -251,6 +251,7 @@ public class JobRunnerEngine implements Runnable, HasLogger {
 			// When adding a queue jobdetail one-sided relationship between the need to make mutually in the job.
 			if (CommandStatus.NOT_STARTED == jobDetail.getStatus()) {
 				// jobDetail.setJob(job);
+				jobDetail.setJobGroupId(job.getJobGroupId());
 				jobDetailQueue.add(jobDetail);
 			}
 		}

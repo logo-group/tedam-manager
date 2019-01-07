@@ -25,6 +25,7 @@ import com.lbs.tedam.data.service.ClientService;
 import com.lbs.tedam.data.service.DraftCommandService;
 import com.lbs.tedam.data.service.JobCommandService;
 import com.lbs.tedam.data.service.JobDetailService;
+import com.lbs.tedam.data.service.JobGroupService;
 import com.lbs.tedam.data.service.JobParameterService;
 import com.lbs.tedam.data.service.JobRunnerDetailCommandService;
 import com.lbs.tedam.data.service.JobService;
@@ -35,6 +36,7 @@ import com.lbs.tedam.jobrunner.event.job.JobListener;
 import com.lbs.tedam.jobrunner.event.job.JobListenerImpl;
 import com.lbs.tedam.jobrunner.manager.ClientMapService;
 import com.lbs.tedam.jobrunner.manager.JobRunnerManager;
+import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
 import com.lbs.tedam.jobrunner.service.BroadcastService;
 import com.lbs.tedam.jobrunner.service.CIRestServiceController;
 import com.lbs.tedam.jobrunner.service.JobRunnerEngineService;
@@ -51,10 +53,10 @@ public class ServerEndpointConfig {
 	public BroadcastService broadcastService(ClientMapService clientMapService, JobService jobService,
 			JobCommandService jobCommandService, JobDetailService jobDetailService, JobRunnerManager jobRunnerManager,
 			JobRunnerDetailCommandService jobRunnerDetailCommandService, JobParameterService jobParameterService,
-			TestCaseService testCaseService) {
+			TestCaseService testCaseService, JobGroupService jobGroupService, JobRunnerScheduler jobRunnerScheduler) {
 		BroadcastServiceImpl broadcastServiceImpl = new BroadcastServiceImpl(jobRunnerManager, clientMapService,
 				jobService, jobCommandService, jobDetailService, jobRunnerDetailCommandService);
-		JobListener jobListener = new JobListenerImpl();
+		JobListener jobListener = new JobListenerImpl(jobGroupService, jobRunnerScheduler);
 		broadcastServiceImpl.addJobListener(jobListener);
 		return broadcastServiceImpl;
 	}

@@ -17,6 +17,8 @@
 
 package com.lbs.tedam.jobrunner.event.job;
 
+import com.lbs.tedam.exception.localized.LocalizedException;
+
 /**
  * Event listener interface for job operations.
  * 
@@ -29,7 +31,8 @@ public interface JobListener {
 	 * Class when a job complete.
 	 * 
 	 * @param event JobEvent instance.
+	 * @throws LocalizedException
 	 */
-	public void onJobComplete(JobEvent event);
+	public void onJobComplete(JobEvent event) throws LocalizedException;
 
 }
