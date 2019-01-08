@@ -85,6 +85,7 @@ public class JobRunnerEngineServiceImpl implements JobRunnerEngineService, HasLo
 		getLogger().info("jobDetailId : " + jobDetail.getId() + " for " + jobCommandList.size() + " until the command was created.");
 		// the created list and the job detail are sent for saving.
 		JobDetail saveJobDetailAndClient = saveJobDetailAndClient(jobDetail);
+		saveJobDetailAndClient.setJobGroupId(jobDetail.getJobGroupId());
 		getLogger().info("Method setJobDetailAttributes is over.");
 		return saveJobDetailAndClient;
 	}
