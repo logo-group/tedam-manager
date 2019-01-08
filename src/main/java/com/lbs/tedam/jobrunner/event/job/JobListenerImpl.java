@@ -46,8 +46,8 @@ public class JobListenerImpl implements JobListener {
 	}
 
 	private void sendNotification(Job job) {
+		if (job.getNotificationGroup() != null && job.getNotificationGroup().getType() != null) {
 		NotificationType notificationType = job.getNotificationGroup().getType();
-		if (notificationType != null) {
 			NotifierFactory.getNotifier(notificationType).sendNotification(job);
 		}
 	}
