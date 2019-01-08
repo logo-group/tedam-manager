@@ -25,6 +25,7 @@ import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
 import com.lbs.tedam.model.Job;
 import com.lbs.tedam.model.JobGroup;
 import com.lbs.tedam.notification.NotifierFactory;
+import com.lbs.tedam.util.EnumsV2.JobStatus;
 import com.lbs.tedam.util.EnumsV2.NotificationType;
 
 public class JobListenerImpl implements JobListener {
@@ -58,6 +59,7 @@ public class JobListenerImpl implements JobListener {
 			List<Job> jobs = jobGroup.getJobs();
 			if (jobs != null && jobs.size() > 0) {
 				checkForNextGroupJob(job, jobGroupId, jobs);
+				checkForJobGroupComplete(job, jobGroup);
 			}
 		}
 	}
@@ -76,6 +78,15 @@ public class JobListenerImpl implements JobListener {
 									// job.
 				break;
 			}
+		}
+	}
+
+	private void checkForJobGroupComplete(Job job, JobGroup jobGroup) throws LocalizedException {
+		List<Job> jobs = jobGroup.getJobs();
+		Job lastJob = jobs.get(jobs.size() - 1);
+		if (job.equals(lastJob)) {
+			jobGroup.setStatus(JobStatus.COMPLETED);
+			jobGroupService.save(jobGroup);
 		}
 	}
 

@@ -35,6 +35,7 @@ import com.lbs.tedam.jobrunner.manager.JobRunnerScheduler;
 import com.lbs.tedam.model.Job;
 import com.lbs.tedam.model.JobGroup;
 import com.lbs.tedam.util.EnumsV2.ClientStatus;
+import com.lbs.tedam.util.EnumsV2.JobStatus;
 import com.lbs.tedam.util.HasLogger;
 import com.lbs.tedam.util.TedamJsonFactory;
 
@@ -96,6 +97,8 @@ public class JobRunnerRestService implements HasLogger {
 				Job job = jobs.get(0);
 				job.setJobGroupId(jobGroupId);
 				jobRunnerScheduler.scheduleJob(job);
+				jobGroup.setStatus(JobStatus.STARTED);
+				jobGroupService.save(jobGroup);
 				getLogger().info("Job added to start. Name: " + job.getName());
 			}
 			return HttpStatus.OK.getReasonPhrase();
@@ -116,6 +119,8 @@ public class JobRunnerRestService implements HasLogger {
 					jobRunnerScheduler.stopJob(job);
 					getLogger().info("Job stop triggered. Name: " + job.getName());
 				}
+				jobGroup.setStatus(JobStatus.STOPPED);
+				jobGroupService.save(jobGroup);
 			}
 			return HttpStatus.OK.getReasonPhrase();
 		} catch (LocalizedException e) {
