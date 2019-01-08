@@ -76,7 +76,6 @@ public class JobListenerImpl implements JobListener {
 			else if (job.equals(jobVar)) {
 				jobFound = true; // we found executed job in this step. so in next step we will execute next
 									// job.
-				break;
 			}
 		}
 	}
