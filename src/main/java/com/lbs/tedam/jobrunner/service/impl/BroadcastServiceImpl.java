@@ -60,9 +60,8 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	@Autowired
 	private JobRunnerScheduler jobRunnerScheduler;
 
-	public BroadcastServiceImpl(JobRunnerManager jobRunnerManager, ClientMapService clientMapService,
-			JobService jobService, JobCommandService jobCommandService, JobDetailService jobDetailService,
-			JobRunnerDetailCommandService jobRunnerDetailCommandService) {
+	public BroadcastServiceImpl(JobRunnerManager jobRunnerManager, ClientMapService clientMapService, JobService jobService, JobCommandService jobCommandService,
+			JobDetailService jobDetailService, JobRunnerDetailCommandService jobRunnerDetailCommandService) {
 		this.jobRunnerManager = jobRunnerManager;
 		this.jobService = jobService;
 		this.jobCommandService = jobCommandService;
@@ -82,15 +81,14 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	 * @param jobCommandId
 	 * @param commandStatusCode
 	 * @param result
-	 * @param description       <br>
+	 * @param description
+	 *            <br>
 	 * @throws VersionParameterValueException
 	 * @throws LocalizedException
 	 */
 	@Override
-	public void startJobCommandOperations(JobRunnerDetailCommand jobRunnerDetailCommand)
-			throws VersionParameterValueException, LocalizedException {
-		JobCommand jobCommand = jobRunnerDetailCommandService
-				.getJobCommandByJobRunnerDetailCommand(jobRunnerDetailCommand);
+	public void startJobCommandOperations(JobRunnerDetailCommand jobRunnerDetailCommand) throws VersionParameterValueException, LocalizedException {
+		JobCommand jobCommand = jobRunnerDetailCommandService.getJobCommandByJobRunnerDetailCommand(jobRunnerDetailCommand);
 		jobCommandService.updateJobCommand(jobCommand);
 		JobDetail jobDetail = jobDetailService.getById(jobCommand.getJobDetailId());
 		Job job = jobService.getById(jobDetail.getJobId());
@@ -104,8 +102,7 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 		if (CommandStatus.NOT_STARTED == jobDetail.getStatus()) {
 			startJobDetailInProgressOperations(jobDetail);
 			if (JobStatus.STARTED != job.getStatus()) {
-				jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.STARTED,
-						LocalDateTime.now(), null);
+				jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.STARTED, LocalDateTime.now(), null);
 			}
 		} else if (isJobDetailJobCommandListFinished(jobDetail)) {
 			startJobDetailCompletedOperations(jobDetail);
@@ -116,23 +113,20 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 		}
 		if (isJobStopped(job)) {
 			getLogger().info("The job with id: " + jobDetail.getJobId() + " change to STOPPED");
-			jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.STOPPED,
-					job.getLastExecutedStartDate(), null);
+			jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.STOPPED, job.getLastExecutedStartDate(), null);
 			return;
 		}
 
 	}
 
-	private void startTestRunOperations(JobRunnerDetailCommand jobRunnerDetailCommand, JobCommand jobCommand,
-			JobDetail jobDetail, Job job) throws VersionParameterValueException, LocalizedException {
-		jobRunnerDetailCommandService.createTestRunForTestCaseAndTestStep(jobRunnerDetailCommand, jobCommand, jobDetail,
-				job);
+	private void startTestRunOperations(JobRunnerDetailCommand jobRunnerDetailCommand, JobCommand jobCommand, JobDetail jobDetail, Job job)
+			throws VersionParameterValueException, LocalizedException {
+		jobRunnerDetailCommandService.createTestRunForTestCaseAndTestStep(jobRunnerDetailCommand, jobCommand, jobDetail, job);
 	}
 
 	private void startJobCompletedOperations(JobDetail jobDetail, Job job) throws LocalizedException {
 		getLogger().info("The job with id: " + jobDetail.getJobId() + " finished");
-		jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.COMPLETED,
-				job.getLastExecutedStartDate(), LocalDateTime.now());
+		jobService.updateJobStatusAndExecutedDateByJobId(jobDetail.getJobId(), JobStatus.COMPLETED, job.getLastExecutedStartDate(), LocalDateTime.now());
 		if (job.getPlannedDate() != null && job.isRunEveryDay()) {
 			addOneDayMore(job);
 		} else {
@@ -154,15 +148,13 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	}
 
 	private void startJobDetailCompletedOperations(JobDetail jobDetail) throws LocalizedException {
-		getLogger().info("The jobdetail with testSetId: " + jobDetail.getTestSet().getId() + " and with jobDetailId:  "
-				+ jobDetail.getId() + " finished");
+		getLogger().info("The jobdetail with testSetId: " + jobDetail.getTestSet().getId() + " and with jobDetailId:  " + jobDetail.getId() + " finished");
 		Client client = jobDetail.getClient();
 		jobDetail.setStatus(CommandStatus.COMPLETED);
 		jobDetail.getTestSet().setTestSetStatus(CommandStatus.COMPLETED);
 		jobDetail.getTestSet().setExecutionDateTime(LocalDateTime.now());
 		jobDetail.getJobCommands().clear();
-		getLogger()
-				.info("clientName : " + client.getName() + " clientId : " + client.getId() + " will be set to free.");
+		getLogger().info("clientName : " + client.getName() + " clientId : " + client.getId() + " will be set to free.");
 		clientMapService.updateClientMap(client, ClientStatus.FREE);
 		jobDetail.setClient(null);
 		jobDetailService.save(jobDetail);
@@ -212,8 +204,7 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 
 	public boolean isJobDetailJobCommandListFinished(JobDetail jobDetail) {
 		for (JobCommand jobCommand : jobDetail.getJobCommands()) {
-			if (!CommandStatus.COMPLETED.equals(jobCommand.getCommandStatus())
-					&& !CommandStatus.BLOCKED.equals(jobCommand.getCommandStatus())) {
+			if (!CommandStatus.COMPLETED.equals(jobCommand.getCommandStatus()) && !CommandStatus.BLOCKED.equals(jobCommand.getCommandStatus())) {
 				return false;
 			}
 		}
@@ -221,10 +212,10 @@ public class BroadcastServiceImpl implements BroadcastService, HasLogger {
 	}
 
 	private void addOneDayMore(Job job) throws LocalizedException {
-		job.setStatus(JobStatus.PLANNED);
 		job.setPlannedDate(job.getPlannedDate().plusDays(1));
-		jobRunnerScheduler.scheduleJob(job);
-		jobService.save(job);
+		Job scheduledJob = jobService.saveJobAndJobDetailsStatus(job, JobStatus.PLANNED, CommandStatus.NOT_STARTED, null);
+		jobRunnerScheduler.scheduleJob(scheduledJob);
+		jobService.save(scheduledJob);
 	}
 
 	private void callOnJobComplete(Job job) throws LocalizedException {
